@@ -4,9 +4,23 @@
       <section>
         <h5 class="title">Novo Usuário</h5>
         <form @submit.prevent="createUser()">
-          <input type="text" v-model="user.name" placeholder="Nome" />
-          <input type="text" v-model="user.email" placeholder="Email" />
-          <button :disabled="user.name == '' && user.email == ''" type="submit">
+          <input
+            class="form-field"
+            type="text"
+            v-model="user.name"
+            placeholder="Nome"
+          />
+          <input
+            class="form-field"
+            type="text"
+            v-model="user.email"
+            placeholder="Email"
+          />
+          <button
+            class="button-create"
+            :disabled="user.name == '' || user.email == ''"
+            type="submit"
+          >
             Criar
           </button>
         </form>
@@ -18,7 +32,18 @@
           <li v-for="userbd in users" :key="userbd.id">
             <p>{{ userbd.name }}</p>
             <small>{{ userbd.email }}</small>
-            <a class="destroy" @click="deleteUser(userbd.id)"></a>
+            <div class="buttons">
+              <label
+                >{{ userbd.ativo ? 'Ativar' : 'Desativar' }}
+                <input
+                  id="ativo"
+                  @click="activateOrDeactivate(userbd.id, userbd.ativo)"
+                  type="checkbox"
+                  v-model="userbd.ativo"
+                />
+              </label>
+              <a @click="deleteUser(userbd.id)">Deletar</a>
+            </div>
           </li>
         </ul>
       </section>
@@ -37,7 +62,8 @@ export default defineComponent({
       users: [] as User[],
       user: {
         name: '',
-        email: ''
+        email: '',
+        ativo: true
       }
     };
   },
@@ -68,6 +94,16 @@ export default defineComponent({
       this.user.name = '';
       this.user.email = '';
     },
+    async activateOrDeactivate(id: number, ativo: boolean) {
+      await axios
+        .patch(`/users/${id}`, ativo)
+        .then(() => {
+          this.getAllUsers();
+        })
+        .catch((error) => {
+          console.warn(error);
+        });
+    },
     async deleteUser(id: number) {
       await axios
         .delete(`/users/${id}`)
@@ -78,8 +114,14 @@ export default defineComponent({
           console.warn(error);
         });
     }
+  },
+  computed: {
+    filterActiveUsers(): User[] {
+      return this.users.filter((user) => user.ativo);
+    }
   }
 });
+('');
 </script>
 
 <style scoped>
@@ -102,7 +144,7 @@ form {
   grid-gap: 1rem;
 }
 
-input {
+.form-field {
   background: transparent;
   border: 1px solid #999fc6;
   border-radius: 1rem;
@@ -111,11 +153,11 @@ input {
   color: #e1e8ef;
 }
 
-input::placeholder {
+.form-field::placeholder {
   color: #999fc6;
 }
 
-button {
+.button-create {
   background-color: #2d6cea;
   color: #e1e8ef;
   border: none;
@@ -128,7 +170,7 @@ button {
   box-shadow: 0 0 5px 3px rgba(45, 108, 234, 0.3);
 }
 
-button:hover {
+.button-create:hover {
   background-color: #1b5cdc;
 }
 
@@ -152,40 +194,25 @@ li {
   color: #8b98a8;
 }
 
-.destroy {
-  background-color: #d53e6b;
-  width: 24px;
-  height: 24px;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s linear;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  right: 1.3rem;
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-items: center;
 }
 
-.destroy:before,
-.destroy:after {
-  content: '';
-  width: 3px;
-  height: 13px;
-  background-color: #ececf6;
-  border-radius: 1rem;
-  position: absolute;
-  top: 50%;
-  left: 50%;
+.buttons:first-child {
+  width: 50px;
+  margin-right: 30px;
 }
 
-.destroy:before {
-  transform: translate(-50%, -50%) rotate(45deg);
+.buttons label {
+  font-weight: 700;
 }
 
-.destroy:after {
-  transform: translate(-50%, -50%) rotate(130deg);
-}
-
-.destroy:hover {
-  background-color: #984848;
+.buttons input {
+  margin-top: 15px;
+  height: 1.5rem;
+  width: calc(2rem + 0.75rem);
+  border-radius: 3rem;
 }
 </style>
